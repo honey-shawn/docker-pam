@@ -8,7 +8,8 @@ RUN rpm --rebuilddb \
     && yum update -y \
     && yum install -y tar bzip2 yum-utils rpm-build
 
-RUN yum-builddep -y pam \
+RUN rpm --rebuilddb \
+    && yum-builddep -y pam \
     && yumdownloader --source pam \
     && rpmbuild --rebuild  --define 'WITH_AUDIT 0' --define 'dist +noaudit' pam*.src.rpm \
     && rpm -Uvh --oldpackage ~/rpmbuild/RPMS/*/pam*+noaudit*.rpm
