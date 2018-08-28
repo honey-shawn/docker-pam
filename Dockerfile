@@ -1,19 +1,16 @@
 FROM tianon/centos:6.5
-MAINTAINER SequenceIQ
+MAINTAINER honeyshawn
 
 ADD Centos-Source.repo /etc/yum.repos.d/Centos-Source.repo
 
-#RUN yum clean all \
-#    && yum update -y \
-#    && yum clean all \
-RUN rpm --rebuilddb && yum update -y
+# rpm数据库损坏需要重建,因此需要在 “yum install …” 前使用 “rpm –rebuilddb” 重建数据库
+RUN rpm --rebuilddb \
+    && yum update -y \
+    && yum install -y tar bzip2 yum-utils rpm-build
 
-RUN yum install -y tar bzip2 yum-utils rpm-build
+RUN yum-builddep -y pam \
+    && yumdownloader --source pam \
+    && rpmbuild --rebuild  --define 'WITH_AUDIT 0' --define 'dist +noaudit' pam*.src.rpm \
+    && rpm -Uvh --oldpackage ~/rpmbuild/RPMS/*/pam*+noaudit*.rpm
 
-RUN yum-builddep -y pam
-RUN yumdownloader --source pam
-RUN rpmbuild --rebuild  --define 'WITH_AUDIT 0' --define 'dist +noaudit' pam*.src.rpm
-RUN rpm -Uvh --oldpackage ~/rpmbuild/RPMS/*/pam*+noaudit*.rpm
-
-RUN rm -f /*.rpm
-RUN rm -rf ~/rpmbuild
+RUN rm -f /*.rpm && rm -rf ~/rpmbuild
